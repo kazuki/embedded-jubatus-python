@@ -237,3 +237,43 @@ class TestClassifier(unittest.TestCase):
             fd.write(b'{"hoge')
             fd.flush()
             self.assertRaises(ValueError, Classifier, fd.name)
+
+    def test_coef(self):
+        x = Classifier(CONFIG)
+        x.train([
+            ('0', Datum({'0': 1, '1': 0})),
+            ('1', Datum({'0': -1, '1': 0})),
+            ('2', Datum({'0': 0, '1': 1})),
+        ])
+        coef, classes, features = x.get_coefficients()
+        self.assertEqual(3, len(classes))
+        self.assertEqual(set(['0', '1', '2']), set(classes))
+        self.assertEqual(2, len(features))
+        self.assertEqual(set([0, 1]), set(features.keys()))
+        self.assertEqual(set(['0@num', '1@num']), set(features.values()))
+        tmp = {}
+        for i in range(len(coef)):
+            tmp[classes[i]] = t = {}
+            for j in range(len(coef[i])):
+                t[features[j]] = coef[i][j]
+        self.assertEqual({
+            '0': {
+                '0@num': 2.0,
+                '1@num': 0.0,
+            },
+            '1': {
+                '0@num': -1.0,
+                '1@num': -1.0,
+            },
+            '2': {
+                '0@num': 0.0,
+                '1@num': 1.0,
+            }
+        }, tmp)
+
+        try:
+            x.classes_ = [0, 1, 2]
+            coef = x.coef_.tolist()
+            self.assertEqual([[2, 0], [-1, -1], [0, 1]], coef)
+        except ImportError:
+            pass

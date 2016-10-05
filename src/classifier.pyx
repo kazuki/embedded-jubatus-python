@@ -11,6 +11,7 @@ cdef class _ClassifierWrapper:
     def _init(self, config):
         self._handle = new _Classifier(config)
         self.classes_ = None
+        self.n_features_ = None
         typ, ver = b'classifier', 1
         return (
             lambda: self._handle.get_config().decode('utf8'),
@@ -88,6 +89,7 @@ cdef class _ClassifierWrapper:
             raise ValueError
         if self.classes_ is None:
             self.classes_ = []
+        self.n_features_ = X.shape[1]
         max_label = len(self.classes_) - 1
         for i in range(rows):
             if is_ndarray:
@@ -179,3 +181,49 @@ cdef class _ClassifierWrapper:
                     max_j, max_score = j, r[j].score
             ret[i] = lexical_cast[int, string](r[max_j].label)
         return ret
+
+    def _is_linear(self):
+        import json
+        m = json.loads(self._handle.get_config().decode('utf8'))['method']
+        return m in ('perceptron', 'PA', 'PA1', 'PA2', 'CW', 'AROW', 'NHERD')
+
+    @property
+    def coef_(self):
+        if not self._is_linear():
+            raise RuntimeError('must be linear classifier')
+        import numpy as np
+        cdef vector[vector[double]] coef
+        cdef vector[string] classes
+        cdef map[uint32_t, string] features
+        if self.classes_:
+            for i in range(len(self.classes_)):
+                classes.push_back(str(i).encode('ascii'))
+        self._handle.get_coefficients(coef, classes, features)
+        X = np.array([[c for c in x] for x in coef])
+
+        if self.n_features_ is None:
+            max_id = X.shape[1] - 1
+            for k, v in features:
+                max_id = max(max_id, int(v[0:v.index(b'@')]))
+        else:
+            max_id = self.n_features_ - 1
+        X = np.hstack((np.zeros((X.shape[0], 1)), X))
+        m = np.zeros(max_id + 1, dtype=np.int32)
+        for k, v in features:
+            m[int(v[0:v.index(b'@')])] = k + 1
+        X2 = X[:,m]
+        return X2
+
+    def get_coefficients(self):
+        if not self._is_linear():
+            raise RuntimeError('must be linear classifier')
+        cdef vector[vector[double]] coef
+        cdef vector[string] classes
+        cdef map[uint32_t, string] features
+        if self.classes_:
+            for i in range(len(self.classes_)):
+                classes.push_back(str(i).encode('ascii'))
+        self._handle.get_coefficients(coef, classes, features)
+        return ([[c for c in x] for x in coef],
+                [c.decode('utf8') for c in classes],
+                dict([(k, v.decode('utf8')) for k, v in features]))

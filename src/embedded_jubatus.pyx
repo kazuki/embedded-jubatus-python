@@ -1,3 +1,4 @@
+from libc.stdint cimport uint32_t
 from libc.stdint cimport uint64_t
 from libcpp.string cimport string
 from libcpp.vector cimport vector

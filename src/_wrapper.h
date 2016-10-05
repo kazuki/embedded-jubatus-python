@@ -93,14 +93,21 @@ public:
 typedef std::vector<std::pair<std::string, float> > id_score_list_t;
 
 class _Classifier : public _Base<jubatus::core::driver::classifier> {
+    shared_ptr<jubatus::core::storage::storage_base> storage_;
 public:
     _Classifier(const std::string& config);
-    ~_Classifier() {}
+    ~_Classifier() {
+        storage_.reset();
+    }
     void train(const std::string& label, const datum& d);
     classify_result classify(const datum& d);
     std::vector<std::pair<std::string, uint64_t> > get_labels();
     bool set_label(const std::string& new_label);
     bool delete_label(const std::string& target_label);
+
+    void get_coefficients(std::vector<std::vector<double> >& coef,
+                          std::vector<std::string>& classes,
+                          std::map<uint32_t, std::string>& features) const;
 };
 
 class _Regression : public _Base<jubatus::core::driver::regression> {

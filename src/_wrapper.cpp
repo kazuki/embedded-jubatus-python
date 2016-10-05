@@ -69,8 +69,9 @@ _Classifier::_Classifier(const std::string& config) {
     jsonconfig::config params;
     converter_config fvconv_config;
     parse_config(config, &method, &params, &fvconv_config);
+    storage_ = storage_factory::create_storage("local");
     handle.reset(new classifier(classifier_factory::create_classifier(
-        method, params, storage_factory::create_storage("local")),
+        method, params, storage_),
         make_fv_converter(fvconv_config, NULL)));
     this->config.assign(config);
 }
@@ -99,6 +100,66 @@ bool _Classifier::set_label(const std::string& new_label) {
 
 bool _Classifier::delete_label(const std::string& target_label) {
     return handle->delete_label(target_label);
+}
+
+void _Classifier::get_coefficients(std::vector<std::vector<double> >& coef,
+                                   std::vector<std::string>& classes,
+                                   std::map<uint32_t, std::string>& features) const {
+    using jubatus::core::framework::stream_writer;
+    using jubatus::core::framework::jubatus_packer;
+    using jubatus::core::framework::packer;
+
+    coef.clear();
+    features.clear();
+
+    msgpack::sbuffer buf;
+    {
+        stream_writer<msgpack::sbuffer> st(buf);
+        jubatus_packer jp(st);
+        packer packer(jp);
+        storage_->pack(packer);
+    }
+
+    msgpack::unpacked unpacked;
+    msgpack::unpack(&unpacked, buf.data(), buf.size());
+    msgpack::object_array& a = unpacked.get().via.array;
+    msgpack::object_map& m = a.ptr[0].via.map;
+
+    // unpack key_manager.id2key_ and reorder classes
+    std::map<uint64_t, uint32_t> clsmap;
+    {
+        msgpack::object_array& km = a.ptr[1].via.array;
+        msgpack::object_map& km_id2key = km.ptr[1].via.map;
+        std::map<std::string, int> cls2id;
+        uint32_t idx = 0;
+        for (std::vector<std::string>::const_iterator it = classes.begin();
+             it != classes.end(); ++it, ++idx) {
+            cls2id[*it] = idx;
+        }
+        for (uint32_t i = 0; i < km_id2key.size; ++i) {
+            msgpack::object_kv& kv = km_id2key.ptr[i];
+            std::string k(kv.val.via.raw.ptr, kv.val.via.raw.size);
+            if (cls2id.find(k) == cls2id.end()) {
+                cls2id[k] = idx++;
+                classes.push_back(k);
+            }
+            clsmap[kv.key.via.u64] = cls2id[k];
+        }
+    }
+
+    // allocate coefficients
+    coef.resize(classes.size());
+    for (size_t i = 0; i < coef.size(); ++i) {
+        coef[i].resize(m.size);
+    }
+
+    for (uint32_t i = 0; i < m.size; ++i) {
+        msgpack::object_map& v = m.ptr[i].val.via.map;
+        features[i] = std::string(m.ptr[i].key.via.raw.ptr, m.ptr[i].key.via.raw.size);
+        for (uint32_t j = 0; j < v.size; ++j) {
+            coef[clsmap[v.ptr[j].key.via.u64]][i] = v.ptr[j].val.via.array.ptr[0].via.dec;
+        }
+    }
 }
 
 _Regression::_Regression(const std::string& config) {

@@ -1,3 +1,4 @@
+from libc.stdint cimport uint32_t
 from libc.stdint cimport uint64_t
 from libcpp cimport bool
 from libcpp.string cimport string
@@ -18,6 +19,9 @@ cdef extern from '_wrapper.h' nogil:
         vector[pair[string, uint64_t]] get_labels()
         bool set_label(const string& new_label)
         bool delete_label(const string& target_label)
+        void get_coefficients(vector[vector[double]]& coef,
+                              vector[string]& classes,
+                              map[uint32_t, string]& features)
         string dump(const string& type, uint64_t ver)
         void load(const string& data, const string& type, uint64_t ver)
         string get_config()
