@@ -52,13 +52,12 @@ install:
         docker exec test yum -y install jubatus-core-devel;
       fi;
       docker exec test yum -y install python-pip;
-      if [ $VERSION -eq 6 ]; then
-        docker exec test pip install --upgrade setuptools;
-      fi;
+      docker exec test pip install --upgrade setuptools pip;
     fi
   - if [ "$DIST" == "ubuntu" ]; then
       docker exec test apt-get -y update;
       docker exec test apt-get --force-yes -y install python-dev python-pip g++;
+      docker exec test pip install --upgrade setuptools pip;
       if [ "$TRAVIS_BRANCH" == "master" ]; then
         docker exec test apt-get --force-yes -y install jubatus;
       fi;
