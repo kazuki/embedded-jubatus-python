@@ -29,7 +29,7 @@ cdef datum_native2py(datum& d):
         ret.add_binary(k, v)
     return ret
 
-cdef ndarray_to_datum(c_np.ndarray[c_np.float64_t, ndim=2] X, int i, datum& d, vector[string]& cache):
+cdef ndarray_to_datum(c_np.ndarray[c_np.float64_t, ndim=2] X, int i, datum& d):
     d.string_values_.clear()
     d.num_values_.clear()
     d.binary_values_.clear()
@@ -42,7 +42,7 @@ cdef ndarray_to_datum(c_np.ndarray[c_np.float64_t, ndim=2] X, int i, datum& d, v
 cdef csr_to_datum(c_np.ndarray[c_np.float64_t, ndim=1] data,
                   c_np.ndarray[c_np.int32_t, ndim=1] indices,
                   c_np.ndarray[c_np.int32_t, ndim=1] indptr,
-                  int i, datum& d, vector[string]& cache):
+                  int i, datum& d):
     d.string_values_.clear()
     d.num_values_.clear()
     d.binary_values_.clear()
