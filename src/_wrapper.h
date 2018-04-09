@@ -1,5 +1,6 @@
 #include <string>
 
+#include <numpy/ndarrayobject.h>
 #include <jubatus/util/lang/shared_ptr.h>
 #include <jubatus/util/text/json.h>
 #include <jubatus/core/fv_converter/datum.hpp>
@@ -269,3 +270,6 @@ public:
 void allocate_number_string(std::size_t);
 const std::string& get_number_string(std::size_t);
 const std::string& get_number_string_fast(std::size_t);
+
+void ndarray_to_datum2(const PyObject*, size_t, datum&);
+void csr_to_datum2(const PyObject*, const PyObject*, const PyObject*, size_t, datum&);

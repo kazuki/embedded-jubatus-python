@@ -1,3 +1,5 @@
+from cpython.ref cimport PyObject
+
 from libc.stdint cimport uint64_t
 from libcpp cimport bool
 from libcpp.string cimport string
@@ -9,6 +11,10 @@ ctypedef vector[pair[string, float]] sfv_t
 ctypedef map[string, string] prop_t
 ctypedef uint64_t edge_id_t
 ctypedef uint64_t node_id_t
+
+cdef extern from '_wrapper.h':
+    cdef void ndarray_to_datum2(const PyObject* obj, size_t i, datum&) except +
+    cdef void csr_to_datum2(const PyObject*, const PyObject*, const PyObject*, size_t, datum&) except +
 
 cdef extern from '_wrapper.h' nogil:
     cdef void allocate_number_string(size_t max_num) except +

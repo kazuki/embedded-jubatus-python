@@ -102,9 +102,13 @@ cdef class Classifier(_JubatusBase):
         allocate_number_string(max(X.shape[1], max_label))
         for i in range(rows):
             if is_ndarray:
-                ndarray_to_datum(X, i, d)
+                ndarray_to_datum2(<const PyObject*>X, i, d)
+                #ndarray_to_datum(X, i, d)
             else:
-                csr_to_datum(X.data, X.indices, X.indptr, i, d)
+                #csr_to_datum(X.data, X.indices, X.indptr, i, d)
+                csr_to_datum2(<const PyObject*>X.data,
+                              <const PyObject*>X.indices,
+                              <const PyObject*>X.indptr, i, d)
             self._handle.train(get_number_string_fast(y[i]), d)
         for j in range(len(self._classes), max_label + 1):
             self._classes.append(j)
