@@ -607,3 +607,31 @@ jubatus::core::graph::node_info _Graph::get_node(const std::string& node_id) con
 jubatus::core::graph::edge_info _Graph::get_edge(edge_id_t eid) const {
     return handle->get_edge(eid);
 }
+
+static std::vector<std::string> cache;
+static jubatus::util::concurrent::rw_mutex mutex;
+
+void allocate_number_string(std::size_t max_num) {
+    jubatus::util::concurrent::scoped_wlock lk(mutex);
+    for (std::size_t i = cache.size(); i <= max_num; ++i)
+        cache.push_back(lexical_cast<std::string>(i));
+}
+
+const std::string& get_number_string(std::size_t num) {
+    {
+        jubatus::util::concurrent::scoped_rlock lk(mutex);
+        if (cache.size() > num)
+            return cache[num];
+    }
+    {
+        jubatus::util::concurrent::scoped_wlock lk(mutex);
+        for (std::size_t i = cache.size(); i <= num; ++i)
+            cache.push_back(lexical_cast<std::string>(i));
+        return cache[num];
+    }
+}
+
+const std::string& get_number_string_fast(std::size_t num) {
+    jubatus::util::concurrent::scoped_rlock lk(mutex);
+    return cache[num];
+}

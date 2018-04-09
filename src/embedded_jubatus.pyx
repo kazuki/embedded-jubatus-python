@@ -33,6 +33,9 @@ from _wrapper cimport node_info
 from _wrapper cimport edge_info
 from _wrapper cimport preset_query
 from _wrapper cimport indexed_point
+from _wrapper cimport allocate_number_string
+from _wrapper cimport get_number_string
+from _wrapper cimport get_number_string_fast
 
 from jubatus.anomaly.types import IdWithScore as AnomalyIdWithScore
 from jubatus.bandit.types import ArmInfo

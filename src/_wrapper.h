@@ -265,3 +265,7 @@ public:
     jubatus::core::graph::node_info get_node(const std::string& node_id) const;
     jubatus::core::graph::edge_info get_edge(edge_id_t eid) const;
 };
+
+void allocate_number_string(std::size_t);
+const std::string& get_number_string(std::size_t);
+const std::string& get_number_string_fast(std::size_t);

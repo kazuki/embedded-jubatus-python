@@ -11,6 +11,10 @@ ctypedef uint64_t edge_id_t
 ctypedef uint64_t node_id_t
 
 cdef extern from '_wrapper.h' nogil:
+    cdef void allocate_number_string(size_t max_num) except +
+    cdef const string& get_number_string(size_t num) except +
+    cdef const string& get_number_string_fast(size_t num) except +
+
     cdef cppclass _Classifier:
         _Classifier(const string& config) except +
         void train(const string& config, const datum& d) except +
@@ -182,6 +186,7 @@ cdef extern from '_wrapper.h' nogil:
         void load(const string& data, const string& type, uint64_t ver) except +
         string get_config() except +
         void clear() except +
+
 
 cdef extern from 'jubatus/core/fv_converter/datum.hpp' namespace 'jubatus::core::fv_converter' nogil:
     cdef cppclass datum:

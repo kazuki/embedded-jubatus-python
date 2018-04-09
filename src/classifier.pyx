@@ -99,17 +99,14 @@ cdef class Classifier(_JubatusBase):
             raise ValueError
         if self._classes is None:
             self._classes = []
-        max_label = len(self._classes) - 1
+        max_label = max(len(self._classes) - 1, max(y))
+        allocate_number_string(max(X.shape[1], max_label + 1))
         for i in range(rows):
             if is_ndarray:
                 ndarray_to_datum(X, i, d, cache)
             else:
                 csr_to_datum(X.data, X.indices, X.indptr, i, d, cache)
-            for j in range(cache.size(), y[i] + 1):
-                cache.push_back(lexical_cast[string, int](j))
-            if max_label < y[i]:
-                max_label = y[i]
-            self._handle.train(cache[y[i]], d)
+            self._handle.train(get_number_string_fast(y[i]), d)
         for j in range(len(self._classes), max_label + 1):
             self._classes.append(j)
         return self
